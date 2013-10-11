@@ -6,6 +6,8 @@ Click the image to create polygons. To avoid minor gaps or overlaps between poly
 
 I built this for my own convenience, not really intending to be distributed widely. However feel free to use it for your own purposes.
 
+It uses a QuadTree implementation by Mike Chambers: https://github.com/mikechambers/ExamplesByMesh/tree/master/JavaScript/QuadTree
+
 ================================
 
 The MIT License (MIT)
