@@ -1,4 +1,4 @@
-+ Polygon Builder
+# Polygon Builder
 
 This is a utility for building polygons visually based on an image layered underneath a transparent canvas.
 
