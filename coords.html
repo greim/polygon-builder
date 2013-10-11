@@ -9,11 +9,13 @@ body{
     margin:0;
     padding:20px;
 }
+h1{
+    margin:0;
+}
 #editor-wrap{
     font-size:0;
-    background:#f0f;
-    padding:20px;
     display:inline-block;
+    box-shadow:5px 5px 10px rgba(0,0,0,0.5);
 }
 #editor{
     background:#fff;
@@ -26,20 +28,25 @@ body{
     cursor:default;
 }
 textarea{
-    width:600px;
-    height:400px;
+    width:400px;
+    height:200px;
     white-space:nowrap;
     font-family:monospace;
+}
+#instructions{
+    font-size:13px;
+    font-weight:normal;
 }
 </style>
 </head>
 <body>
+<h1>Image Map Tool <span id="instructions"></span></h1>
+<div id="editor-wrap"><div id="editor"></div></div>
 <form>
 <input type="text" placeholder="enter image url" size="64" value="">
-<button>go</button><br>
+<button>load it</button><br>
 <textarea></textarea>
 </form>
-<div id="editor-wrap"><div id="editor"></div></div>
 <script src="jquery.js"></script>
 <script src="await.js"></script>
 <script src="quad.js"></script>
@@ -67,6 +74,7 @@ function initEditor(url){
         }, true);
 
         $('#editor').html('<canvas id="c" width="'+w+'" height="'+h+'"></canvas><img width="'+w+'" height="'+h+'" src="'+url+'">');
+        $('#instructions').text('click on the image to begin creating polygons');
         var c = document.getElementById('c');
         var $c = $(c);
         var ctx = c.getContext('2d');
