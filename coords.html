@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width" />
+<title>COORDS</title>
+<style type="text/css">
+body{
+    margin:0;
+    padding:20px;
+}
+#editor-wrap{
+    font-size:0;
+    background:#f0f;
+    padding:20px;
+    display:inline-block;
+}
+#editor{
+    background:#fff;
+    position: relative;
+}
+#editor canvas{
+    position: absolute;
+    left:0;
+    top:0;
+    cursor:default;
+}
+textarea{
+    width:600px;
+    height:400px;
+    white-space:nowrap;
+    font-family:monospace;
+}
+</style>
+</head>
+<body>
+<form>
+<input type="text" placeholder="enter image url" size="64" value="">
+<button>go</button><br>
+<textarea></textarea>
+</form>
+<div id="editor-wrap"><div id="editor"></div></div>
+<script src="jquery.js"></script>
+<script src="await.js"></script>
+<script src="quad.js"></script>
+<script>
+
+
+$('form').on('submit', function(ev){
+    ev.preventDefault();
+    var url = $('form input').val();
+    initEditor(url);
+});
+
+var multiplier = 2.5;
+function initEditor(url){
+    var img = new Image();
+    img.onload = function(){
+        var w = img.width*multiplier, h = img.height*multiplier;
+        var snapDist = 20;
+
+        var quad = new QuadTree({
+            x:0,
+            y:0,
+            width:w,
+            height:h
+        }, true);
+
+        $('#editor').html('<canvas id="c" width="'+w+'" height="'+h+'"></canvas><img width="'+w+'" height="'+h+'" src="'+url+'">');
+        var c = document.getElementById('c');
+        var $c = $(c);
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = 'hsla(230, 100%, 70%, 0.5)';
+        ctx.strokeStyle = '#c60';
+        ctx.lineWidth = 2;
+        var path = false;
+        var shapes = [];
+        var $code = $('textarea');
+
+        function dist(p1, p2){
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+
+        function same(p1,p2){
+            return p1.x===p2.x && p1.y===p2.y;
+        }
+
+        function updateCode(name){
+            var coordString = shapes.map(function(path){
+                return '<area shape="poly" id="'+path.name+'" coords="' + path.map(function(coord){
+                    return coord.x/multiplier + ', ' + coord.y/multiplier;
+                }).join(', ') + '">';
+            }).join('\n');
+            $code.val(coordString);
+        }
+
+        function draw(point){
+            ctx.clearRect(0,0,w,h);
+            ctx.beginPath();
+            if (path && path.length > 0) {
+                ctx.moveTo(path[0].x, path[0].y);
+                for (var i=1; i<path.length; i++){
+                    ctx.lineTo(path[i].x, path[i].y);
+                }
+            }
+            ctx.lineTo(point.x,point.y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 5, 0, Math.PI*2)
+            ctx.stroke();
+            ctx.fill();
+
+            for (var i=0; i<shapes.length; i++) {
+                ctx.beginPath();
+                ctx.moveTo(shapes[i][0].x, shapes[i][0].y);
+                for (var j=1; j<shapes[i].length; j++) {
+                    ctx.lineTo(shapes[i][j].x, shapes[i][j].y);
+                }
+                ctx.fill();
+                ctx.stroke();
+                ctx.beginPath();
+                for (var j=1; j<shapes[i].length; j++) {
+                    ctx.moveTo(shapes[i][j].x, shapes[i][j].y);
+                    ctx.arc(shapes[i][j].x, shapes[i][j].y, 2, 0, Math.PI*2);
+                }
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+
+        $c.on('click', function(ev){
+            if (!path) { path = []; }
+            var point = { x:ev.offsetX, y:ev.offsetY };
+            if (path.length > 2 && dist(path[0], point) < snapDist) {
+                path.name = prompt('name');
+                path.push(path[0]);
+                shapes.push(path);
+                path = false;
+                updateCode();
+            } else {
+                var near = quad.retrieve(point).filter(function(otherPoint){
+                    return dist(point, otherPoint) < snapDist;
+                });
+                if (near.length > 0 && !(path.length > 0 && same(near[0], path[path.length-1]))) {
+                    near.sort(function(pa, pb){
+                        return dist(pa,point) - dist(pb,point);
+                    });
+                    path.push(near[0]);
+                } else {
+                    path.push(point);
+                    quad.insert(point);
+                }
+            }
+            draw(point);
+        });
+
+        $c.on('mousemove', function(ev){
+            draw({x:ev.offsetX, y:ev.offsetY});
+        });
+
+        $(document.documentElement).on('keydown', function(ev){
+            if (ev.keyCode === 27) {
+                path = false;
+            }
+        });
+    };
+    img.src = url;
+}
+
+</script>
+</body>
+</html>
